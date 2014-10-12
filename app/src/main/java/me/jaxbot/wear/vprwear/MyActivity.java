@@ -44,28 +44,31 @@ public class MyActivity extends Activity {
                 for (int i = 0; i < results.size(); i++) {
                     if (results.get(i).SSID.equals("Vespr-Guest"))
                     {
-                        NotificationManager mNotificationManager = (NotificationManager)
-                                ctx.getSystemService(Context.NOTIFICATION_SERVICE);
-                        Notification notif = new Notification.Builder(ctx)
-                                .setContentTitle("You are at Vespr.")
-                                .setSmallIcon(R.drawable.ic_launcher)
-                                .build();
-                        mNotificationManager.notify(NOTIFICATION_ID, notif);
+                        showVesprNotification();
                     }
                     break;
                 }
             }
         }, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        showVesprNotification();
+    }
 
+    void showVesprNotification()
+    {
         QRCodeWriter writer = new QRCodeWriter();
         try {
-            BitMatrix bitMatrix = writer.encode("{\"cn\": num}", BarcodeFormat.QR_CODE, 256, 128);
+            BitMatrix bitMatrix = writer.encode("{cn:num}", BarcodeFormat.QR_CODE, 128, 128);
             int width = bitMatrix.getWidth();
             int height = bitMatrix.getHeight();
-            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            Bitmap bmp = Bitmap.createBitmap(width + 100, height + 80, Bitmap.Config.RGB_565);
+            for (int x = 0; x < width + 100; x++) {
+                for (int y = 0; y < height + 80; y++) {
+                    bmp.setPixel(x, y, (x % 2 == 0 && y % 2 == 0) ? Color.MAGENTA : Color.WHITE);
+                }
+            }
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
-                    bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                    bmp.setPixel(x + 40, y + 10, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
                 }
             }
             ((ImageView) findViewById(R.id.imageView1)).setImageBitmap(bmp);
@@ -74,6 +77,8 @@ public class MyActivity extends Activity {
                     this.getSystemService(Context.NOTIFICATION_SERVICE);
             Notification notif = new Notification.Builder(this)
                     .setContentTitle("Vprwear")
+                    .setPriority(Notification.PRIORITY_HIGH)
+                    .setVibrate(new long[]{ 100, 100, 100, 100 })
                     .setSmallIcon(R.drawable.ic_launcher)
                     .setLargeIcon(bmp)
                     .setStyle(new Notification.BigPictureStyle()
