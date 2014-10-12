@@ -7,13 +7,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.google.zxing.BarcodeFormat;
@@ -29,11 +33,21 @@ public class MyActivity extends Activity {
     private static final int NOTIFICATION_ID = 1;
 
     @Override
+    protected void onPause()
+    {
+       saveNumber();
+       super.onPause();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
 
         final Context ctx = this;
+
+        final EditText txtNumber = (EditText)(findViewById(R.id.editText));
+
         final WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         registerReceiver(new BroadcastReceiver()
         {
@@ -50,14 +64,21 @@ public class MyActivity extends Activity {
                 }
             }
         }, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+
+        SharedPreferences pref = ctx.getSharedPreferences("U", 0);
+        txtNumber.setText(String.valueOf(pref.getInt("number", 12345)));
+
+
         showVesprNotification();
     }
 
     void showVesprNotification()
     {
+        String num = ((EditText) (findViewById(R.id.editText))).getText().toString();
+
         QRCodeWriter writer = new QRCodeWriter();
         try {
-            BitMatrix bitMatrix = writer.encode("{cn:num}", BarcodeFormat.QR_CODE, 128, 128);
+            BitMatrix bitMatrix = writer.encode("{cn:" + num + "}", BarcodeFormat.QR_CODE, 128, 128);
             int width = bitMatrix.getWidth();
             int height = bitMatrix.getHeight();
             Bitmap bmp = Bitmap.createBitmap(width + 100, height + 80, Bitmap.Config.RGB_565);
@@ -91,23 +112,12 @@ public class MyActivity extends Activity {
         }
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.my, menu);
-        return true;
+    void saveNumber()
+    {
+        SharedPreferences pref = this.getSharedPreferences("U", 0);
+        SharedPreferences.Editor edit = pref.edit();
+        edit.putInt("number", Integer.valueOf(((EditText) (findViewById(R.id.editText))).getText().toString()));
+        edit.commit();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 }
